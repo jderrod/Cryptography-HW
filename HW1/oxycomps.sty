@@ -1,0 +1,237 @@
+% LaTeX configuration for a single-column format
+
+\documentclass[11pt]{article} % Standard article class for single-column format
+
+\usepackage{times} % Use Times as the default font
+\usepackage[style=numeric,sorting=nyt]{biblatex} % Format the bibliography nicely
+\usepackage{xpatch} % Used to patch \textcite
+
+% Change \textcite to do family-name (year)
+\xpatchbibmacro{textcite}
+  {\printnames{labelname}}
+  {\printnames{labelname} (\printfield{year})}
+  {}
+  {}
+% Sort bibliography by last name
+\DeclareNameAlias{default}{family-given}
+
+\usepackage{amsfonts, amsmath, amssymb} % Provides math symbols and environments
+\usepackage{caption} % Fixes caption spacing issues
+\usepackage[usenames,dvipsnames]{color} % Allows for colored text
+\usepackage{enumitem} % Adjusts list spacing
+\usepackage{graphicx} % Allows image insertion
+\usepackage{hyperref} % Creates links within the page and to URLs
+\usepackage{listings} % Provides the lstlisting environment for code
+\usepackage{url} % Formats URLs properly
+\usepackage{verbatim} % Provides the comment environment
+
+% Set single-column page dimensions
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in} % Adjusted for full-page single-column
+\setlength{\topmargin}{-0.5in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0.2in}
+\setlength{\parindent}{1em}
+\setlength{\oddsidemargin}{0in} % Proper alignment for full-page text
+\setlength{\evensidemargin}{0in} % Proper alignment for full-page text
+
+% Remove the space between list items
+\setlist{noitemsep}
+
+% Style code listings
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    showstringspaces=false
+}
+
+% Title formatting for a single-column layout
+\title{HW 1 - Cryptography}
+\author{James Derrod}
+\date{\today} % You can change this or remove it
+
+% Style the abstract
+\renewcommand{\abstractname}{\large\bf Abstract}
+\renewcommand{\baselinestretch}{1.2} % Adjust line spacing
+
+\begin{document}
+
+\maketitle
+
+\section{Question 1: Breaking the Improved Vigenère Cipher}
+The improved Vigenère cipher replaces shift ciphers with multiple substitution ciphers. The key consists of $t$ random permutations of the alphabet, and each letter in positions $i, t+i, 2t+i, \dots$ is encrypted using the $i$-th permutation.
+
+\subsection*{Breaking the Cipher}
+To decrypt this cipher, proceed as follows:
+
+\begin{enumerate}
+    \item \textbf{Partition the Ciphertext:} Since each letter in positions $i, t+i, 2t+i, \dots$ is encrypted with the same substitution cipher, the ciphertext can be divided into $t$ separate groups.
+    \item \textbf{Perform Frequency Analysis:} Each group follows a monoalphabetic substitution cipher, which is vulnerable to letter frequency analysis. By matching ciphertext letter frequencies to English letter distributions, can determine each substitution permutation independently.
+    \item \textbf{Recover the Key:} Once each of the $t$ substitution ciphers is solved, the full key (set of $t$ permutations) is reconstructed.
+    \item \textbf{Decrypt the Message:} With the key known, reversing the substitutions decrypts the full plaintext.
+\end{enumerate}
+
+\subsection*{Why This Works}
+Monoalphabetic substitution ciphers are vulnerable to frequency analysis. Since the improved Vigenère cipher simply applies multiple independent substitutions, it can be broken by analyzing each group separately.
+
+
+\section*{Question 2: Known-Plaintext Attack on Shift, Substitution, and Vigenère Ciphers}
+
+A known-plaintext attack (KPA) allows an adversary to learn plaintext-ciphertext pairs and attempt to recover the key. Show that the shift, substitution, and Vigenère ciphers are all vulnerable.
+
+\subsection*{Shift Cipher}
+A shift cipher encrypts each letter by shifting it by a fixed amount $k$. Given a single known plaintext-ciphertext pair, the shift $k$ can be determined as:
+\[
+k = (\text{ciphertext letter index}) - (\text{plaintext letter index}) \mod 26.
+\]
+Since the same shift is applied to all letters, knowing one plaintext letter is enough to recover $k$ and decrypt the entire ciphertext.
+
+\textbf{Known plaintext required:} 1 letter.
+
+\subsection*{Substitution Cipher}
+A monoalphabetic substitution cipher replaces each letter with a unique mapping. If the entire alphabet appears in a known plaintext-ciphertext pair, the full substitution mapping can be directly recovered. If only a partial alphabet appears, frequency analysis can be used to infer missing letters.
+
+\textbf{Known plaintext required:} At least 26 letters (if covering the full alphabet).
+
+\subsection*{Vigenère Cipher}
+The Vigenère cipher uses a repeating keyword to apply multiple shift ciphers. If the key length $t$ is known, the ciphertext can be split into $t$ separate shift ciphers. Each shift can then be solved using the method for the shift cipher above.
+
+If $t$ is unknown, it can be determined using repeated patterns or the Kasiski examination. Once $t$ is found, breaking the cipher reduces to solving $t$ shift ciphers.
+
+\textbf{Known plaintext required:} At least $t$ letters (one for each shift cipher).
+
+\subsection*{Conclusion}
+All three ciphers are vulnerable to a known-plaintext attack:
+\begin{itemize}
+    \item Shift cipher: broken with \textbf{1 known letter}.
+    \item Substitution cipher: broken with \textbf{26 known letters} (full alphabet).
+    \item Vigenère cipher: broken with \textbf{$t$ known letters}, assuming the period is known.
+\end{itemize}
+Each of these ciphers provides minimal security against a known-plaintext attack.
+
+\section*{Question 3: Attacking an Encrypted Password}
+
+An attacker knows that a user's password is either \texttt{abcd} or \texttt{bedg} and wants to determine which one was used, given the ciphertext.
+
+\subsection*{(a) Shift Cipher}
+A shift cipher applies the same shift $k$ to all letters. The attacker can determine $k$ by computing the shift for any letter:
+\[
+k = (\text{ciphertext letter index}) - (\text{plaintext letter index}) \mod 26.
+\]
+By encrypting both \texttt{abcd} and \texttt{bedg} under all possible shifts and comparing with the ciphertext, the attacker can uniquely determine $k$ and identify the correct password.
+
+\textbf{Conclusion:} The shift cipher is completely insecure, as the attacker can always determine the password.
+
+\subsection*{(b) Vigenère Cipher}
+The Vigenère cipher encrypts using a repeating key. Analyze different key lengths.
+
+\subsubsection*{Period 2}
+With a key length of $t = 2$, the first and second letters are encrypted with different shifts, repeating every two letters. The attacker can test all $26^2$ possible two-letter keys to determine which password was used.
+
+\textbf{Conclusion:} The attacker can efficiently brute-force the key.
+
+\subsubsection*{Period 3}
+With $t = 3$, the attacker must test $26^3$ keys, making brute-force harder. However, if enough plaintext is available, frequency analysis can be used to break each shift separately.
+
+\textbf{Conclusion:} More difficult but still breakable.
+
+\subsubsection*{Period 4}
+With $t = 4$, the number of possible keys increases to $26^4$. This makes brute-force infeasible, but known-plaintext techniques such as frequency analysis can still be applied.
+
+\textbf{Conclusion:} More secure but not unbreakable.
+
+\subsection*{Conclusion}
+\begin{itemize}
+    \item \textbf{Shift cipher:} Completely insecure; attacker can always determine the password.
+    \item \textbf{Vigenère cipher (Period 2):} Easily brute-forced.
+    \item \textbf{Vigenère cipher (Period 3):} Harder but still breakable.
+    \item \textbf{Vigenère cipher (Period 4):} More resistant but still vulnerable to analysis.
+\end{itemize}
+
+\section*{Question 4: Perfect Secrecy - Proofs and Refutations}
+
+Analyze two statements about perfect secrecy, proving or refuting them.
+
+\subsection*{(a) Prove or Refute:}
+\[
+\Pr[M = m_0 \mid C = c] = \Pr[M = m_1 \mid C = c]
+\]
+for all messages \( m_0, m_1 \) in the message space \( M \) and all ciphertexts \( c \) in the ciphertext space \( C \).
+
+\subsubsection*{Proof}
+By the definition of perfect secrecy, observing the ciphertext provides no additional information about the plaintext:
+\[
+\Pr[M = m \mid C = c] = \Pr[M = m].
+\]
+Applying this to two messages \( m_0, m_1 \), we get:
+\[
+\Pr[M = m_0 \mid C = c] = \Pr[M = m_0], \quad \Pr[M = m_1 \mid C = c] = \Pr[M = m_1].
+\]
+Since these probabilities are independent of \( c \), they must be equal. Thus, the given statement holds.
+
+\textbf{Conclusion:} The statement is \textbf{true} and equivalent to the definition of perfect secrecy.
+
+\subsection*{(b) Prove or Refute:}
+\[
+\Pr[C = c_0] = \Pr[C = c_1]
+\]
+for all ciphertexts \( c_0, c_1 \) in the ciphertext space \( C \).
+
+\subsubsection*{Counterexample: One-Time Pad}
+The one-time pad is a perfectly secret encryption scheme but does not guarantee uniform ciphertext probabilities. If messages are not uniformly distributed, some ciphertexts may occur more frequently than others.
+
+For example, suppose \( M = \{m_0, m_1\} \) with \( \Pr[M = m_0] \neq \Pr[M = m_1] \). Since encryption randomly maps messages to ciphertexts, the probability of a given ciphertext depends on the distribution of messages, leading to \( \Pr[C = c_0] \neq \Pr[C = c_1] \).
+
+\textbf{Conclusion:} The statement is \textbf{false}; perfect secrecy does not require ciphertexts to be equally probable.
+
+\section*{Question 5: Equivalence of Perfect Secrecy Definitions}
+
+Prove the equivalence of two definitions of perfect secrecy.
+
+\subsection*{Definition 1 (Bayesian Formulation)}
+An encryption scheme \(\Pi = (\text{Gen}, \text{Enc}, \text{Dec})\) over message space \( M \) is perfectly secret if:
+\[
+\Pr[M = m \mid C = c] = \Pr[M = m]
+\]
+for all messages \( m \) and ciphertexts \( c \) with \( \Pr[C = c] > 0 \). This means that observing \( c \) provides no additional information about \( m \).
+
+\subsection*{Definition 2 (Adversarial Indistinguishability)}
+An encryption scheme is perfectly secret if for every adversary \( A \):
+\[
+\Pr[\text{${PrivK^{eav}_{A,\Pi}}$ = 1]} = \frac{1}{2}.
+\]
+Here, an adversary chooses two messages \( m_0, m_1 \) and receives the encryption of one of them, \( \text{Enc}_k(m_b) \), where \( b \in \{0,1\} \) is randomly chosen. The adversary must guess \( b' \), and success means \( b' = b \). Perfect secrecy ensures the adversary has no advantage over random guessing.
+
+\subsection*{(a) Proof that Definition 1 Implies Definition 2}
+1. By Definition 1, knowing the ciphertext does not affect the probability of any plaintext.
+2. Thus, for any messages \( m_0, m_1 \) and ciphertext \( c \),
+   \[
+   \Pr[C = c \mid M = m_0] = \Pr[C = c \mid M = m_1].
+   \]
+3. Since ciphertexts are equally likely for both messages, the adversary cannot distinguish which one was encrypted.
+4. Therefore, the best strategy is random guessing, meaning:
+   \[
+   \Pr[\text{${PrivK^{eav}_{A,\Pi}}$]} = \frac{1}{2}.
+   \]
+
+\textbf{Conclusion:} Definition 1 \(\Rightarrow\) Definition 2.
+
+\subsection*{(b) Proof that Definition 2 Implies Definition 1}
+1. Assume Definition 2 holds: no adversary can distinguish encryptions of \( m_0 \) and \( m_1 \) better than random guessing.
+2. This implies that for all ciphertexts \( c \),
+   \[
+   \Pr[C = c \mid M = m_0] = \Pr[C = c \mid M = m_1].
+   \]
+3. Using Bayes' theorem:
+   \[
+   \Pr[M = m \mid C = c] = \frac{\Pr[C = c \mid M = m] \Pr[M = m]}{\Pr[C = c]}.
+   \]
+4. Since \( \Pr[C = c \mid M = m] \) is the same for all messages, \( C \) does not affect \( M \), satisfying Definition 1.
+
+\textbf{Conclusion:} Definition 2 \(\Rightarrow\) Definition 1.
+
+\subsection*{Final Conclusion}
+Since both implications hold, can conclude that the two definitions of perfect secrecy are equivalent.
+
+
+\end{document}
